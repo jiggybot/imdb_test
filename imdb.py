@@ -13,19 +13,19 @@ import hashlib
 
 def create_dbconn():
     """
-    Skapa custom dbconn för reuse.
+    Customustom dbconn for reuse.
     """
     try:
         cnxn = create_engine(
         "mysql+pymysql://jiggybot:Orudden1234!@localhost/imdb?host=localhost?port=3306")
-
+        #Conn string..depending on flavor
         return cnxn
     except:
         raise Exception("No db conn")
 
 def hashkey(sourcedf, *column):
     """
-    Lägg till md5 hashkey baserat på pk (ie surrogat för joins osv)
+    md5 hashkey based on pk (ie surrogat for joins and more)
     """
     destdf = sourcedf.assign(hashkey = pd.DataFrame(sourcedf[list(column)].values.sum(axis=1))
              [0].str.encode('utf-8').apply(lambda x: (hashlib.md5(x).hexdigest().upper())))
@@ -33,7 +33,7 @@ def hashkey(sourcedf, *column):
 
 def explode_array_df(df, explodecol, sep, indexcol):
     """
-    Kör ut till nya rader baserat på array och index. 
+    Explore arrays based on sep
     """
     df[explodecol] = df[explodecol].str.split(sep)
     df = df.explode(explodecol).reset_index(drop=True)
@@ -45,7 +45,7 @@ def explode_array_df(df, explodecol, sep, indexcol):
 
 def title_spec(cnxn):
     """
-    Skapa title_ak tabell. Also known as (andra språk osv.)
+    Create title spec table
     """
      
     title_ak = pd.read_csv(os.path.join(data_path,'title.akas.tsv'),
@@ -61,16 +61,16 @@ def title_spec(cnxn):
     title_ak['surrogate'] = title_ak['titleId'].astype(str) + title_ak['ordering'].astype(str)
     title_spec = hashkey(title_ak, 'surrogate')
     
-    #Till db
+    #to db
     title_spec.to_sql('title_spec', cnxn, if_exists='replace', index=None, chunksize = 100000,
-                    dtype=    { 'titleId': sqlalchemy.types.NVARCHAR(length=1000) ,
-                                'ordering': sqlalchemy.INTEGER(), 
-                                'title':  sqlalchemy.types.NVARCHAR(length=1000),
-                                'region': sqlalchemy.types.NVARCHAR(length=1000),
-                                'language': sqlalchemy.types.NVARCHAR(length=1000),
-                                'isOriginalTitle': sqlalchemy.INTEGER(),
-                                'surrogate': sqlalchemy.types.NVARCHAR(length=1000),
-                                'hashkey': sqlalchemy.types.CHAR(length=32)
+                    dtype=    { 'titleId': sa.types.NVARCHAR(length=1000) ,
+                                'ordering': sa.INTEGER(), 
+                                'title':  sa.types.NVARCHAR(length=1000),
+                                'region': sa.types.NVARCHAR(length=1000),
+                                'language': sa.types.NVARCHAR(length=1000),
+                                'isOriginalTitle': sa.INTEGER(),
+                                'surrogate': sa.types.NVARCHAR(length=1000),
+                                'hashkey': sa.types.CHAR(length=32)
                                 })
     #PK (fk sist pga av inläsning)
     with cnxn.connect() as con:
@@ -78,7 +78,7 @@ def title_spec(cnxn):
 
 def title_spec(cnxn):
     """
-    Skapa title_spec tabell. Also known as (andra språk osv.)
+    Create title_spec table.
     """
 
     with cnxn.connect() as con:
@@ -113,12 +113,12 @@ def title_spec(cnxn):
     title_ak['surrogate'] = title_ak['titleId'].astype(str) + '-' + title_ak['ordering'].astype(str)
     title_spec = hashkey(title_ak, 'surrogate')
     
-    #Till db
+    #to db
     title_spec.to_sql('title_spec', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def title_type(cnxn):
     """
-    Skapa title_type tabell. 
+    Create title_type tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS title_type;')
@@ -149,13 +149,13 @@ def title_type(cnxn):
     title_type = hashkey(title_ak, 'surrogate')
     
     
-    #Till db
+    #to db
     title_type.to_sql('title_type', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 
 def title_attrib(cnxn):
     """
-    Skapa title_attrib tabell. 
+    Create title_attrib tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS title_attrib;')
@@ -184,14 +184,13 @@ def title_attrib(cnxn):
     #Business key/surrogate och hasha
     title_ak['surrogate'] = title_ak['titleId'].astype(str) + '-' + title_ak['ordering'].astype(str)   
     title_attrib = hashkey(title_ak, 'surrogate')
-    
-    #title_attrib.to_csv("SNEKTOWN", sep=';')
-    #Till db
+
+    #to db
     title_attrib.to_sql('title_attrib', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def title(cnxn):
     """
-    Skapa title tabell. 
+    Create title tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS title;')
@@ -227,12 +226,12 @@ def title(cnxn):
     title_ak['surrogate'] = title_ak['titleId'].astype(str)   
     title = hashkey(title_ak, 'surrogate')
     
-    #Till db
+    #to db
     title.to_sql('title', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def title_genre(cnxn):
     """
-    Skapa title_genre tabell. 
+    Create title_genre tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS title_genre;')
@@ -258,23 +257,23 @@ def title_genre(cnxn):
     'tconst':'titleId', 'genres':'genre', 
     })
     
-    #Explodera och sätt haskkey.
+    #Explodera and set hashkey.
     exploded = explode_array_df(title_ak, 'genre', ',', 'titleId')
     exploded['surrogate'] = exploded['titleId'].astype(str) + '-' + exploded['genre'].astype(str)  
     title_genre = hashkey(exploded, 'surrogate')
 
-    #Ändra ordning
+    #Change order
     title_genre = title_genre[['titleId', 'genre', 'surrogate', 'hashkey']]
     title_genre = title_genre[title_genre['genre'].notna()]
 
     title_genre.to_csv("SNEKTOWN", sep=';')
 
-    #Till db
+    #to db
     title_genre.to_sql('title_genre', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def directors(cnxn):
     """
-    Skapa directors tabell. 
+    Create directors tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS directors;')
@@ -303,18 +302,18 @@ def directors(cnxn):
     #Dropa nulls
     title_ak = title_ak[title_ak['director'].notna()]
     
-    #Explodera och sätt haskkey.
+    #Explode and set hashkey
     exploded = explode_array_df(title_ak, 'director', ',', 'titleId')
     exploded['surrogate'] = exploded['titleId'].astype(str) + '-' + exploded['director'].astype(str)  
     directors = hashkey(exploded, 'surrogate')
     
 
-    #Till db
+    #to db
     directors.to_sql('directors', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def writers(cnxn):
     """
-    Skapa writers tabell. 
+    Create writers tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS writers;')
@@ -343,18 +342,18 @@ def writers(cnxn):
     #Dropa nulls
     title_ak = title_ak[title_ak['writer'].notna()]
     
-    #Explodera och sätt haskkey.
+    #Explode and set hashkey
     exploded = explode_array_df(title_ak, 'writer', ',', 'titleId')
     exploded['surrogate'] = exploded['titleId'].astype(str) + '-' + exploded['writer'].astype(str)  
     writers = hashkey(exploded, 'surrogate')
     
 
-    #Till db
+    #to db
     writers.to_sql('writers', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def episodes(cnxn):
     """
-    Skapa episodes tabell. 
+    Create episodes tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS episodes;')
@@ -389,12 +388,12 @@ def episodes(cnxn):
     #Dropa nulls
     episodes = episodes[episodes['seasonNumber'].notna()]
 
-    #Till db
+    #to db
     episodes.to_sql('episodes', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def characters(cnxn):
     """
-    Skapa characters tabell. 
+    Create characters tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS characters;')
@@ -420,11 +419,11 @@ def characters(cnxn):
     'tconst':'titleId', 'nconst':'personId'
     })
     
-    #Kan skrivas snyggare..men ta bort [" encasing "]
+    #Could be done easier lazy [" encasing "]
     title_ak['characters'] = title_ak.characters.str.replace('[\"\[\]]','',regex=True)
     title_ak['characters'] = title_ak.characters.str.replace('\\','|')
 
-    #Exploda kör saxad...lat
+    #Exploda spec with multi
     title_ak = title_ak.assign(characters=title_ak.characters.str.split(',')).explode('characters').reset_index(drop=True)
 
     title_ak = title_ak.rename(columns={
@@ -439,12 +438,12 @@ def characters(cnxn):
     #Dropa nulls
     characters = characters[characters['character'].notna()]
     
-    #Till db
+    #to db
     characters.to_sql('characters', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def cast(cnxn):
     """
-    Skapa cast tabell. 
+    Create cast tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS cast;')
@@ -478,12 +477,12 @@ def cast(cnxn):
     title_ak['surrogate'] = title_ak['titleId'].astype(str) + '-' + title_ak['ordering'].astype(str)
     cast = hashkey(title_ak, 'surrogate')
 
-    #Till db
+    #to db
     cast.to_sql('cast', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def ratings(cnxn):
     """
-    Skapa ratings tabell. 
+    Create ratings tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS ratings;')
@@ -512,12 +511,12 @@ def ratings(cnxn):
     title_ak['surrogate'] = title_ak['titleId'].astype(str)   
     ratings = hashkey(title_ak, 'surrogate')
     
-    #Till db
+    #to db
     ratings.to_sql('ratings', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def person_profession(cnxn):
     """
-    Skapa person_profession tabell. 
+    Create person_profession tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS person_profession;')
@@ -546,17 +545,17 @@ def person_profession(cnxn):
     #Dropa nulls
     title_ak = title_ak[title_ak['primaryProfession'].notna()]
     
-    #Explodera och sätt haskkey.
+    #Explode and set hashkey
     exploded = explode_array_df(title_ak, 'primaryProfession', ',', 'personId')
     exploded['surrogate'] = exploded['personId'].astype(str) + '-' + exploded['primaryProfession'].astype(str)  
     person_profession = hashkey(exploded, 'surrogate')
 
-    #Till db
+    #to db
     person_profession.to_sql('person_profession', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def person_known_for(cnxn):
     """
-    Skapa person_known_for tabell. 
+    Create person_known_for tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS person_known_for;')
@@ -585,17 +584,17 @@ def person_known_for(cnxn):
     #Dropa nulls
     title_ak = title_ak[title_ak['knownForTitles'].notna()]
     
-    #Explodera och sätt haskkey.
+    #Explode and set hashkey
     exploded = explode_array_df(title_ak, 'knownForTitles', ',', 'personId')
     exploded['surrogate'] = exploded['personId'].astype(str) + '-' + exploded['knownForTitles'].astype(str)  
     person_known_for = hashkey(exploded, 'surrogate')
 
-    #Till db
+    #to db
     person_known_for.to_sql('person_known_for', cnxn, if_exists='append', index=None, chunksize = 100000)
 
 def person(cnxn):
     """
-    Skapa person tabell. 
+    Create person tabell. 
     """ 
     with cnxn.connect() as con:
         con.execute('DROP TABLE IF EXISTS person;')
@@ -627,32 +626,32 @@ def person(cnxn):
     title_ak['surrogate'] = title_ak['personId'].astype(str)   
     person = hashkey(title_ak, 'surrogate')
     
-    #Till db
+    #to db
     person.to_sql('person', cnxn, if_exists='append', index=None, chunksize = 100000)
 #########
 #Kör här#
 #########
-#Speca datalib + rader vi vill dra in.
-data_path = './data'
-rows = 10000
+#Specify data path and rows to read for test purpose
+if __name__ == "__main__":
+    
+    data_path = './data'
+    rows = 10000
+    cnxn = create_dbconn()
 
-cnxn = create_dbconn()
-
-#Splitta upp till tabeller baserat på title_ak
-#title_spec(cnxn)
-#title_type(cnxn)
-#title_attrib(cnxn)
-#title(cnxn)
-#title_genre(cnxn)
-#directors(cnxn)
-#writers(cnxn)
-#episodes(cnxn)
-#characters(cnxn)
-#cast(cnxn)
-#ratings(cnxn)
-#person_profession(cnxn)
-#person_known_for(cnxn)
-#person(cnxn)
+    #Run all exporttables
+    title_spec(cnxn)
+    title_type(cnxn)
+    title_attrib(cnxn)
+    title(cnxn)
+    title_genre(cnxn)
+    directors(cnxn)
+    writers(cnxn)
+    episodes(cnxn)
+    characters(cnxn)
+    cast(cnxn)
+    ratings(cnxn)
+    person_profession(cnxn)
+    person_known_for(cnxn)
+    person(cnxn)
 
 
-# person_known_for, person_profession

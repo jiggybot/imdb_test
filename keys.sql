@@ -30,10 +30,9 @@ ALTER TABLE actors
 ADD CONSTRAINT actors_title_id_fkey FOREIGN KEY (titleId) REFERENCES Title(titleId);
 
 ALTER TABLE characters
-ADD CONSTRAINT characters_id_fkey FOREIGN KEY (titleId) REFERENCES Title(titleId);
+ADD CONSTRAINT characters_id_fkey FOREIGN KEY (titleId, personid) REFERENCES Title(titleId);
 
-ALTER TABLE person_known_for
-ADD CONSTRAINT person_known_for_title_id_fkey FOREIGN KEY (knownForTitles) REFERENCES Title(titleId);
+
 
 ALTER TABLE cast
 ADD CONSTRAINT cast_title_id_fkey FOREIGN KEY (titleId) REFERENCES Title(titleId);
@@ -42,11 +41,11 @@ ADD CONSTRAINT cast_title_id_fkey FOREIGN KEY (titleId) REFERENCES Title(titleId
 ALTER TABLE person_profession
 ADD CONSTRAINT person_profession_person_id_fkey FOREIGN KEY (personId) REFERENCES person(personId);
 
-ALTER TABLE characters
-ADD CONSTRAINT characters_person_id_fkey FOREIGN KEY (personId) REFERENCES person(personId);
-
 ALTER TABLE cast
 ADD CONSTRAINT cast_person_id_fkey FOREIGN KEY (personId) REFERENCES person(personId);
 
 ALTER TABLE person_known_for
 ADD CONSTRAINT person_known_for_id_fkey FOREIGN KEY (personId) REFERENCES person(personId);
+
+
+

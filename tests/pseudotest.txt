@@ -1,0 +1,9 @@
+#Tests described
+
+#1 Constraints in place in db! (ie a check for ratings 0-10 and so forth correct FK and PK, Default )
+#2 Test of uniqueness of keys and nulls if in distributed db (only col index)
+#3 Assertions on schema / array values to detect changes! ie table[x,y] == expected mm
+#4 Volume checks (reasonable values on new data)
+#5 Check db connections
+#6 Error handling working?
+#7 Fact models no circular references...
