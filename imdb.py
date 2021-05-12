@@ -17,7 +17,7 @@ def create_dbconn():
     """
     try:
         cnxn = create_engine(
-        "mysql+pymysql://jiggybot:Orudden1234!@localhost/imdb?host=localhost?port=3306")
+        "mysql+pymysql://user:password@localhost/imdb?host=localhost?port=xxxx")
         #Conn string..depending on flavor
         return cnxn
     except:
