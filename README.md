@@ -8,7 +8,7 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install pipenv
 Then install virtual env from the pipfile.lock
 
 ```bash
-pip install foobar
+pip install pipenv
 pipenv install
 ```
 
